@@ -1,20 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Socket Login Example</title>
 </head>
 <body>
-    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    <script>
-        const socket = io("http://localhost:3000/")
+      <input type="text" id="userIdInput" placeholder="Введите ваш ID">
+      <button id="loginButton">Войти</button>
+      <button id="exitButton">Выйти</button>
+      <div id="status"></div>
 
-        socket.on("message", (message) => {
-            console.log(message)
-        })
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+<script>
+      let socket = null;
 
-        socket.emit("client-message", "Hello!")
-    </script>
+      document.getElementById('loginButton').onclick = function() {
+            const userId = document.getElementById('userIdInput').value.trim();
+            if (!userId) {
+                  document.getElementById('status').innerText = "Введите ID!";
+                  return;
+            }
+            document.getElementById('status').innerText = "Подключение...";
+            
+            // Открыть сокет
+            socket = io('http://localhost:3000');
+            
+            socket.on('connect', function() {
+                  document.getElementById('status').innerText = "Успешно! Ваш ID: " + userId;
+
+                  // Отправить ID в событии login
+                  socket.emit('login', userId);
+            });
+
+            socket.on('message', function(message) {
+                  console.log("Сервер:", message);
+            });
+
+            socket.on('userStatus', function(userData) {
+                  console.log("Статус пользователя:", userData);
+            });
+
+            socket.on('broadcasted', function(message) {
+                  console.log("Broadcast:", message);
+            });
+      };
+      
+      document.getElementById('exitButton').onclick = function() {
+        const userId = document.getElementById('userIdInput').value.trim();
+        if (socket && userId) {
+            socket.emit('logout', userId);
+            document.getElementById('status').innerText = "Вы вышли";
+        }
+      };
+</script>
+<style>
+      button {
+            background-color: #fff;
+      }
+      #loginButton {
+            color: #2bff00;
+      }
+      #exitButton {
+            color: #ff0000
+      }
+</style>
 </body>
 </html>
